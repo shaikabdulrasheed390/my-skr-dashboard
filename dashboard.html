@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Updated Business Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 450px; /* Optimized for a vertical 16:9 aspect ratio */
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .button-primary {
+            background-color: #1f2937;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .button-primary:hover {
+            background-color: #374151;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <div class="container">
+        <header class="text-center mb-4 flex justify-between items-center relative">
+            <div class="flex-grow">
+                <h1 class="text-5xl font-extrabold text-gray-900 leading-tight">PARVEEN PLASTICS LTD.</h1>
+                <p class="text-xl font-bold text-gray-600 mt-1 italic uppercase">quality is our success</p>
+            </div>
+            <!-- Calendar Icon with Dropdown -->
+            <div class="absolute right-0 top-0 mt-2 mr-2">
+                <button id="calendar-button" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </button>
+                <div id="calendar-modal" class="modal">
+                    <div class="modal-content">
+                        <h3 class="text-lg font-bold mb-4">Select a Date</h3>
+                        <div class="flex flex-col gap-4">
+                            <select id="year-select" class="p-2 border rounded-lg w-full"></select>
+                            <select id="month-select" class="p-2 border rounded-lg w-full"></select>
+                            <select id="day-select" class="p-2 border rounded-lg w-full"></select>
+                        </div>
+                        <button id="apply-date-button" class="button-primary mt-4 w-full">Apply</button>
+                        <button id="close-calendar-modal" class="mt-2 text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Consolidated Summary Bar -->
+        <div class="grid grid-cols-2 gap-4 text-center my-4">
+            <div class="p-3 bg-white rounded-lg shadow-md">
+                <p class="text-xs text-gray-500 font-bold">TOTAL PURCHASED STOCK</p>
+                <p id="total-purchased-stock" class="text-3xl font-bold text-gray-800 mt-1">0.00 Kgs</p>
+            </div>
+            <div class="p-3 bg-white rounded-lg shadow-md">
+                <p class="text-xs text-gray-500 font-bold">TOTAL SOLD STOCK</p>
+                <p id="total-sold-stock" class="text-3xl font-bold text-gray-800 mt-1">0.00 Kgs</p>
+            </div>
+            <div class="p-3 bg-white rounded-lg shadow-md col-span-2">
+                <p class="text-xs text-gray-500 font-bold">REMAINING STOCK</p>
+                <p id="remaining-stock-display" class="text-3xl font-bold text-gray-800 mt-1">0.00 Kgs</p>
+            </div>
+        </div>
+
+        <main class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 1. Purchases Module -->
+                <div class="card flex flex-col items-center">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 uppercase">PURCHASES</h2>
+                    <div class="w-full space-y-4">
+                        <div>
+                            <label for="purchase-stock-qty" class="block text-sm font-medium text-gray-700">Stock Purchased (Kgs)</label>
+                            <input type="number" id="purchase-stock-qty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                        </div>
+                        <div>
+                            <label for="purchase-stock-rate" class="block text-sm font-medium text-gray-700">Purchase Rate (₹ per Kg)</label>
+                            <input type="number" step="0.01" id="purchase-stock-rate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                        </div>
+                    </div>
+                    <button id="purchase-action-button" class="button-primary w-full mt-6">Record Purchase</button>
+                    <button id="cancel-purchase-edit-button" class="w-full mt-2 text-sm text-gray-500 hover:text-gray-700 hidden">Cancel Edit</button>
+
+                    <div class="w-full mt-6 text-sm font-semibold text-gray-700">
+                        <p>Total Spent (with tax): <span id="purchase-total-amount" class="font-bold text-gray-800">₹0.00</span></p>
+                    </div>
+                    <div id="purchase-list" class="w-full mt-6 p-4 bg-gray-100 rounded-lg max-h-64 overflow-y-auto">
+                        <h3 class="font-semibold text-gray-700 mb-2">Purchase History</h3>
+                        <div class="font-bold text-gray-800 text-sm flex justify-between mb-1">
+                            <span class="w-1/4">DATE</span>
+                            <span class="w-1/4 text-center">RATE</span>
+                            <span class="w-1/4 text-center">KGS</span>
+                            <span class="w-1/4 text-center">TAX</span>
+                            <span class="w-1/4 text-right">TOTAL</span>
+                        </div>
+                        <p class="text-sm text-gray-500">No purchases recorded yet.</p>
+                    </div>
+                </div>
+
+                <!-- 2. Sales Module -->
+                <div class="card flex flex-col items-center">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 uppercase">SALES</h2>
+                    <div class="w-full space-y-4">
+                        <div>
+                            <label for="sales-stock-qty" class="block text-sm font-medium text-gray-700">Stock Sold (Kgs)</label>
+                            <input type="number" id="sales-stock-qty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                        </div>
+                        <div>
+                            <label for="sales-stock-rate" class="block text-sm font-medium text-gray-700">Selling Rate (₹ per Kg)</label>
+                            <input type="number" step="0.01" id="sales-stock-rate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                        </div>
+                    </div>
+                    <button id="sales-action-button" class="button-primary w-full mt-6">Record Sale</button>
+                    <button id="cancel-sales-edit-button" class="w-full mt-2 text-sm text-gray-500 hover:text-gray-700 hidden">Cancel Edit</button>
+                    
+                    <div id="sales-list" class="w-full mt-6 p-4 bg-gray-100 rounded-lg max-h-64 overflow-y-auto">
+                        <h3 class="font-semibold text-gray-700 mb-2">Daily Sales History</h3>
+                        <div class="font-bold text-gray-800 text-sm flex justify-between mb-1">
+                            <span class="w-1/4">DATE</span>
+                            <span class="w-1/4 text-center">RATE</span>
+                            <span class="w-1/4 text-center">KGS</span>
+                            <span class="w-1/4 text-center">TAX</span>
+                            <span class="w-1/4 text-right">TOTAL</span>
+                        </div>
+                        <p class="text-sm text-gray-500">No sales recorded yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Tax Summary Module -->
+            <div class="card flex flex-col items-center">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 uppercase">TAX SUMMARY</h2>
+                <div class="w-full">
+                    <div id="tax-summary-list" class="w-full p-4 bg-gray-100 rounded-lg">
+                        <!-- Tax summary content will be dynamically generated here -->
+                    </div>
+                </div>
+                <button id="generate-summary-button" class="button-primary w-full mt-4">✨ Generate Daily Summary</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="modal">
+        <div class="modal-content">
+            <p id="modal-message" class="text-gray-800 mb-4"></p>
+            <button id="modal-close-button" class="button-primary">OK</button>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <p id="confirmation-message" class="text-gray-800 mb-4"></p>
+            <div class="flex justify-center gap-4 mt-4">
+                <button id="confirm-yes" class="button-primary bg-red-500 hover:bg-red-700">Yes</button>
+                <button id="confirm-no" class="button-primary bg-gray-500 hover:bg-gray-700">No</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Modal -->
+    <div id="loading-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex flex-col items-center">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-gray-900"></div>
+                <p class="mt-4 text-gray-800">Generating summary...</p>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, addDoc, collection, query, onSnapshot, setLogLevel, where, getDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase-provided global variables.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase.
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        setLogLevel('Debug');
+
+        // UI elements.
+        const purchaseStockQtyInput = document.getElementById('purchase-stock-qty');
+        const purchaseStockRateInput = document.getElementById('purchase-stock-rate');
+        const purchaseActionButton = document.getElementById('purchase-action-button');
+        const cancelPurchaseEditButton = document.getElementById('cancel-purchase-edit-button');
+        const purchaseTotalAmountDisplay = document.getElementById('purchase-total-amount');
+        const salesStockQtyInput = document.getElementById('sales-stock-qty');
+        const salesStockRateInput = document.getElementById('sales-stock-rate');
+        const salesActionButton = document.getElementById('sales-action-button');
+        const cancelSalesEditButton = document.getElementById('cancel-sales-edit-button');
+        const salesListDisplay = document.getElementById('sales-list');
+        const totalPurchasedStockDisplay = document.getElementById('total-purchased-stock');
+        const totalSoldStockDisplay = document.getElementById('total-sold-stock');
+        const remainingStockDisplay = document.getElementById('remaining-stock-display');
+        const purchaseListDisplay = document.getElementById('purchase-list');
+        const taxSummaryListDisplay = document.getElementById('tax-summary-list');
+        const generateSummaryButton = document.getElementById('generate-summary-button');
+
+        const modal = document.getElementById('custom-modal');
+        const modalMessage = document.getElementById('modal-message');
+        const modalCloseButton = document.getElementById('modal-close-button');
+
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const confirmationMessage = document.getElementById('confirmation-message');
+        const confirmYesButton = document.getElementById('confirm-yes');
+        const confirmNoButton = document.getElementById('confirm-no');
+        
+        const loadingModal = document.getElementById('loading-modal');
+
+        const calendarButton = document.getElementById('calendar-button');
+        const calendarModal = document.getElementById('calendar-modal');
+        const yearSelect = document.getElementById('year-select');
+        const monthSelect = document.getElementById('month-select');
+        const daySelect = document.getElementById('day-select');
+        const applyDateButton = document.getElementById('apply-date-button');
+        const closeCalendarModal = document.getElementById('close-calendar-modal');
+
+        const TAX_RATE = 0.18;
+        let userId = null;
+        let purchaseRef;
+        let salesRef;
+        let totalInputTax = 0;
+        let totalSalesTax = 0;
+        let totalPurchasedStock = 0;
+        let totalSoldStock = 0;
+        let selectedDate = new Date().toISOString().split('T')[0];
+
+        // State for editing
+        let editingPurchaseDocId = null;
+        let editingSalesDocId = null;
+
+        // Custom modal for messages.
+        const showModal = (message) => {
+            modalMessage.textContent = message;
+            modal.style.display = 'flex';
+        };
+
+        modalCloseButton.onclick = () => {
+            modal.style.display = 'none';
+        };
+        
+        // Confirmation modal.
+        const showConfirmationModal = (message, onConfirm) => {
+            confirmationMessage.textContent = message;
+            confirmationModal.style.display = 'flex';
+            confirmYesButton.onclick = () => {
+                onConfirm();
+                confirmationModal.style.display = 'none';
+            };
+            confirmNoButton.onclick = () => {
+                confirmationModal.style.display = 'none';
+            };
+        };
+
+        // Helper function to format date from YYYY-MM-DD to DD-MM-YYYY.
+        function formatDate(isoDate) {
+            if (!isoDate) return '';
+            const [year, month, day] = isoDate.split('-');
+            return `${day}-${month}-${year}`;
+        }
+        
+        // Helper function to format currency in Indian Rupees.
+        const formatIndianCurrency = (amount) => {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR'
+            }).format(amount);
+        };
+        
+        // --- Calendar Module Functions ---
+        const initializeCalendar = () => {
+            yearSelect.innerHTML = '';
+            monthSelect.innerHTML = '';
+            daySelect.innerHTML = '';
+            
+            const today = new Date();
+            for (let year = 2020; year <= 3000; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+            yearSelect.value = today.getFullYear();
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            for (let i = 0; i < 12; i++) {
+                const option = document.createElement('option');
+                option.value = String(i + 1).padStart(2, '0');
+                option.textContent = monthNames[i];
+                monthSelect.appendChild(option);
+            }
+            monthSelect.value = String(today.getMonth() + 1).padStart(2, '0');
+
+            populateDays();
+
+            yearSelect.addEventListener('change', populateDays);
+            monthSelect.addEventListener('change', populateDays);
+            daySelect.value = String(today.getDate()).padStart(2, '0');
+        };
+
+        const populateDays = () => {
+            daySelect.innerHTML = '';
+            const year = yearSelect.value;
+            const month = monthSelect.value;
+            if (!year || !month) return;
+
+            const daysInMonth = new Date(year, month, 0).getDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const option = document.createElement('option');
+                option.value = String(day).padStart(2, '0');
+                option.textContent = day;
+                daySelect.appendChild(option);
+            }
+        };
+
+        // --- Firebase UI update functions ---
+        const updateTaxDisplays = () => {
+            const netTax = totalSalesTax - totalInputTax;
+            let htmlContent = `
+                <div class="font-bold text-gray-800 text-sm flex justify-between mb-2">
+                    <span class="w-1/3">DATE</span>
+                    <span class="w-1/3 text-center">INPUT TAX</span>
+                    <span class="w-1/3 text-right">SALES TAX</span>
+                </div>
+                <div class="p-2 bg-white rounded-md mb-2 text-sm flex items-center">
+                    <span class="font-bold w-1/3">${formatDate(selectedDate)}</span>
+                    <span class="w-1/3 text-center">${formatIndianCurrency(totalInputTax)}</span>
+                    <span class="w-1/3 text-right">${formatIndianCurrency(totalSalesTax)}</span>
+                </div>
+                <div class="font-bold text-gray-800 text-sm flex justify-between mt-4 border-t-2 pt-2">
+                    <span class="w-1/3">TOTAL</span>
+                    <span class="w-1/3 text-center">${formatIndianCurrency(totalInputTax)}</span>
+                    <span class="w-1/3 text-right">${formatIndianCurrency(totalSalesTax)}</span>
+                </div>
+                <div id="net-tax-display" class="w-full mt-4 p-4 bg-white rounded-lg text-center">
+                    <h3 class="font-bold text-lg text-gray-800 mb-2">NET TAX</h3>
+                    <p class="font-extrabold text-xl text-gray-900">
+                        ${formatIndianCurrency(netTax)}
+                    </p>
+                </div>
+            `;
+            taxSummaryListDisplay.innerHTML = htmlContent;
+        };
+
+        const updateRemainingStock = () => {
+            const remainingStock = totalPurchasedStock - totalSoldStock;
+            remainingStockDisplay.textContent = `${remainingStock.toFixed(2)} Kgs`;
+        };
+
+        const updateDashboardForDate = (date) => {
+            const qPurchases = query(purchaseRef, where("date", "==", date));
+            onSnapshot(qPurchases, (querySnapshot) => {
+                totalInputTax = 0;
+                totalPurchasedStock = 0;
+                
+                const sortedPurchases = [];
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    totalInputTax += data.taxAmount;
+                    totalPurchasedStock += data.quantity;
+                    sortedPurchases.push({ ...data, id: doc.id });
+                });
+                sortedPurchases.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                let htmlContent = `
+                    <h3 class="font-semibold text-gray-700 mb-2">Purchase History</h3>
+                    <div class="font-bold text-gray-800 text-sm flex justify-between mb-1">
+                        <span class="w-1/4">DATE</span>
+                        <span class="w-1/4 text-center">RATE</span>
+                        <span class="w-1/4 text-center">KGS</span>
+                        <span class="w-1/4 text-center">TAX</span>
+                        <span class="w-1/4 text-right">TOTAL</span>
+                    </div>
+                `;
+                sortedPurchases.forEach(purchase => {
+                    const formattedDate = formatDate(purchase.date);
+                    htmlContent += `
+                        <div class="p-2 bg-white rounded-md mb-2 text-sm flex items-center">
+                            <span class="font-bold w-1/4">${formattedDate}</span>
+                            <span class="w-1/4 text-center">${formatIndianCurrency(purchase.rate)}</span>
+                            <span class="w-1/4 text-center">${purchase.quantity.toFixed(2)} Kgs</span>
+                            <span class="w-1/4 text-center">${formatIndianCurrency(purchase.taxAmount)}</span>
+                            <span class="w-1/4 text-right font-bold text-gray-800">${formatIndianCurrency(purchase.totalBillWithTax)}</span>
+                            <div class="flex ml-4 space-x-2">
+                                <button class="edit-purchase-btn text-blue-500 hover:text-blue-700 font-bold icon-btn" data-doc-id="${purchase.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.65l-2.828-2.828L13.674.632a.5.5 0 0 1 .707 0l1.414 1.414zM2.5 13.06l1.583 1.582a.5.5 0 0 1-.354.854l-1.583-1.582zM12.146.146a.5.5 0 0 1 .708 0l2.5 2.5a.5.5 0 0 1 0 .708L3.94 14.94a.5.5 0 0 1-.707 0l-1.5-1.5a.5.5 0 0 1 0-.707L11.439.146z"/>
+                                    </svg>
+                                </button>
+                                <button class="delete-purchase-btn text-red-500 hover:text-red-700 font-bold icon-btn" data-doc-id="${purchase.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                if (querySnapshot.empty) {
+                     htmlContent = `<h3 class="font-semibold text-gray-700 mb-2">Purchase History</h3><p class="text-sm text-gray-500">No purchases recorded for this date yet.</p>`;
+                }
+                purchaseListDisplay.innerHTML = htmlContent;
+
+                totalPurchasedStockDisplay.textContent = `${totalPurchasedStock.toFixed(2)} Kgs`;
+                updateTaxDisplays();
+                updateRemainingStock();
+            }, (error) => {
+                console.error("Error listening for purchases:", error);
+            });
+
+            const qSales = query(salesRef, where("date", "==", date));
+            onSnapshot(qSales, (querySnapshot) => {
+                totalSalesTax = 0;
+                totalSoldStock = 0;
+                
+                const sortedSales = [];
+                const dailyTotals = {};
+                
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    totalSoldStock += data.quantity;
+                    totalSalesTax += data.taxAmount;
+
+                    if (!dailyTotals[data.date]) {
+                        dailyTotals[data.date] = { tax: 0, totalBill: 0 };
+                    }
+                    dailyTotals[data.date].tax += data.taxAmount;
+                    dailyTotals[data.date].totalBill += data.totalBillWithTax;
+
+                    sortedSales.push({ ...data, id: doc.id });
+                });
+                
+                sortedSales.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                let salesListHtml = `
+                    <h3 class="font-semibold text-gray-700 mb-2">Daily Sales History</h3>
+                    <div class="font-bold text-gray-800 text-sm flex justify-between mb-1">
+                        <span class="w-1/4">DATE</span>
+                        <span class="w-1/4 text-center">RATE</span>
+                        <span class="w-1/4 text-center">KGS</span>
+                        <span class="w-1/4 text-center">TAX</span>
+                        <span class="w-1/4 text-right">TOTAL</span>
+                    </div>
+                `;
+                sortedSales.forEach(sale => {
+                    const formattedDate = formatDate(sale.date);
+                    salesListHtml += `
+                        <div class="p-2 bg-white rounded-md mb-2 text-sm flex items-center">
+                            <span class="font-bold w-1/4">${formattedDate}</span>
+                            <span class="w-1/4 text-center">${formatIndianCurrency(sale.rate)}</span>
+                            <span class="w-1/4 text-center">${sale.quantity.toFixed(2)} Kgs</span>
+                            <span class="w-1/4 text-center">${formatIndianCurrency(sale.taxAmount)}</span>
+                            <span class="w-1/4 text-right font-bold text-gray-800">${formatIndianCurrency(sale.totalBillWithTax)}</span>
+                            <div class="flex ml-4 space-x-2">
+                                <button class="edit-sales-btn text-blue-500 hover:text-blue-700 font-bold icon-btn" data-doc-id="${sale.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.65l-2.828-2.828L13.674.632a.5.5 0 0 1 .707 0l1.414 1.414zM2.5 13.06l1.583 1.582a.5.5 0 0 1-.354.854l-1.583-1.582zM12.146.146a.5.5 0 0 1 .708 0l2.5 2.5a.5.5 0 0 1 0 .708L3.94 14.94a.5.5 0 0 1-.707 0l-1.5-1.5a.5.5 0 0 1 0-.707L11.439.146z"/>
+                                    </svg>
+                                </button>
+                                <button class="delete-sales-btn text-red-500 hover:text-red-700 font-bold icon-btn" data-doc-id="${sale.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                if (querySnapshot.empty) {
+                     salesListHtml = `<h3 class="font-semibold text-gray-700 mb-2">Daily Sales History</h3><p class="text-sm text-gray-500">No sales recorded for this date yet.</p>`;
+                }
+                salesListDisplay.innerHTML = salesListHtml;
+                
+                totalSoldStockDisplay.textContent = `${totalSoldStock.toFixed(2)} Kgs`;
+                updateTaxDisplays();
+                updateRemainingStock();
+            }, (error) => {
+                console.error("Error listening for sales:", error);
+            });
+        };
+
+        const startEditPurchase = async (docId) => {
+            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'purchases', docId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                purchaseStockQtyInput.value = data.quantity;
+                purchaseStockRateInput.value = data.rate;
+                purchaseActionButton.textContent = 'Update Purchase';
+                cancelPurchaseEditButton.classList.remove('hidden');
+                editingPurchaseDocId = docId;
+            } else {
+                showModal('Document not found for editing.');
+            }
+        };
+
+        const cancelEditPurchase = () => {
+            purchaseStockQtyInput.value = '';
+            purchaseStockRateInput.value = '';
+            purchaseActionButton.textContent = 'Record Purchase';
+            cancelPurchaseEditButton.classList.add('hidden');
+            editingPurchaseDocId = null;
+        };
+
+        const startEditSales = async (docId) => {
+            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'sales', docId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                salesStockQtyInput.value = data.quantity;
+                salesStockRateInput.value = data.rate;
+                salesActionButton.textContent = 'Update Sale';
+                cancelSalesEditButton.classList.remove('hidden');
+                editingSalesDocId = docId;
+            } else {
+                showModal('Document not found for editing.');
+            }
+        };
+
+        const cancelEditSales = () => {
+            salesStockQtyInput.value = '';
+            salesStockRateInput.value = '';
+            salesActionButton.textContent = 'Record Sale';
+            cancelSalesEditButton.classList.add('hidden');
+            editingSalesDocId = null;
+        };
+        
+        // --- Auth and DB setup ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+            } else if (initialAuthToken) {
+                try {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                    userId = auth.currentUser.uid;
+                } catch (error) {
+                    await signInAnonymously(auth);
+                    userId = auth.currentUser.uid;
+                }
+            } else {
+                await signInAnonymously(auth);
+                userId = auth.currentUser.uid;
+            }
+
+            if (userId) {
+                // Define Firestore references after auth is ready.
+                purchaseRef = collection(db, `artifacts/${appId}/users/${userId}/purchases`);
+                salesRef = collection(db, `artifacts/${appId}/users/${userId}/sales`);
+                
+                // Set up real-time listeners for data.
+                updateDashboardForDate(selectedDate);
+                
+                // --- Event Listeners for UI Actions ---
+                purchaseActionButton.addEventListener('click', async () => {
+                    const quantity = parseFloat(purchaseStockQtyInput.value);
+                    const rate = parseFloat(purchaseStockRateInput.value);
+
+                    if (isNaN(quantity) || quantity <= 0 || isNaN(rate) || rate <= 0) {
+                        showModal('Please enter valid positive numbers for quantity and rate.');
+                        return;
+                    }
+                    
+                    const totalBillBeforeTax = quantity * rate;
+                    const taxAmount = totalBillBeforeTax * TAX_RATE;
+                    const totalBillWithTax = totalBillBeforeTax + taxAmount;
+
+                    try {
+                        const purchaseData = {
+                            date: selectedDate,
+                            quantity: quantity,
+                            rate: rate,
+                            totalBillBeforeTax: parseFloat(totalBillBeforeTax.toFixed(2)),
+                            taxAmount: parseFloat(taxAmount.toFixed(2)),
+                            totalBillWithTax: parseFloat(totalBillWithTax.toFixed(2)),
+                            timestamp: new Date()
+                        };
+
+                        if (editingPurchaseDocId) {
+                            await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'purchases', editingPurchaseDocId), purchaseData);
+                            showModal('Purchase updated successfully!');
+                            cancelEditPurchase();
+                        } else {
+                            await addDoc(purchaseRef, purchaseData);
+                            showModal('Purchase recorded successfully!');
+                        }
+
+                        purchaseTotalAmountDisplay.textContent = formatIndianCurrency(totalBillWithTax);
+                        purchaseStockQtyInput.value = '';
+                        purchaseStockRateInput.value = '';
+                    } catch (error) {
+                        console.error("Error saving purchase: ", error);
+                        showModal('Failed to save purchase. Please try again.');
+                    }
+                });
+
+                cancelPurchaseEditButton.addEventListener('click', () => {
+                    cancelEditPurchase();
+                });
+
+                salesActionButton.addEventListener('click', async () => {
+                    const quantity = parseFloat(salesStockQtyInput.value);
+                    const rate = parseFloat(salesStockRateInput.value);
+
+                    if (isNaN(quantity) || quantity <= 0 || isNaN(rate) || rate <= 0) {
+                        showModal('Please enter valid positive numbers for quantity and rate.');
+                        return;
+                    }
+                    
+                    const totalBillBeforeTax = quantity * rate;
+                    const taxAmount = totalBillBeforeTax * TAX_RATE;
+                    const totalBillWithTax = totalBillBeforeTax + taxAmount;
+
+                    try {
+                        const salesData = {
+                            date: selectedDate,
+                            quantity: quantity,
+                            rate: rate,
+                            totalBillBeforeTax: parseFloat(totalBillBeforeTax.toFixed(2)),
+                            taxAmount: parseFloat(taxAmount.toFixed(2)),
+                            totalBillWithTax: parseFloat(totalBillWithTax.toFixed(2)),
+                            timestamp: new Date()
+                        };
+
+                        if (editingSalesDocId) {
+                            await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'sales', editingSalesDocId), salesData);
+                            showModal('Sale updated successfully!');
+                            cancelEditSales();
+                        } else {
+                            await addDoc(salesRef, salesData);
+                            showModal('Sale recorded successfully!');
+                        }
+
+                        salesStockQtyInput.value = '';
+                        salesStockRateInput.value = '';
+                    } catch (error) {
+                        console.error("Error saving sale: ", error);
+                        showModal('Failed to save sale. Please try again.');
+                    }
+                });
+
+                cancelSalesEditButton.addEventListener('click', () => {
+                    cancelEditSales();
+                });
+
+                // Event delegation for dynamically created buttons
+                purchaseListDisplay.addEventListener('click', async (event) => {
+                    const target = event.target;
+                    const docId = target.closest('button')?.dataset.docId;
+                    if (!docId) return;
+
+                    if (target.closest('.edit-purchase-btn')) {
+                        startEditPurchase(docId);
+                    } else if (target.closest('.delete-purchase-btn')) {
+                        showConfirmationModal('Are you sure you want to delete this purchase record?', async () => {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'purchases', docId));
+                            showModal('Purchase deleted successfully!');
+                        });
+                    }
+                });
+
+                salesListDisplay.addEventListener('click', async (event) => {
+                    const target = event.target;
+                    const docId = target.closest('button')?.dataset.docId;
+                    if (!docId) return;
+
+                    if (target.closest('.edit-sales-btn')) {
+                        startEditSales(docId);
+                    } else if (target.closest('.delete-sales-btn')) {
+                        showConfirmationModal('Are you sure you want to delete this sales record?', async () => {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'sales', docId));
+                            showModal('Sale deleted successfully!');
+                        });
+                    }
+                });
+
+                // Calendar Module
+                calendarButton.addEventListener('click', () => {
+                    calendarModal.style.display = 'flex';
+                    initializeCalendar();
+                });
+
+                closeCalendarModal.addEventListener('click', () => {
+                    calendarModal.style.display = 'none';
+                });
+
+                applyDateButton.addEventListener('click', () => {
+                    const year = yearSelect.value;
+                    const month = monthSelect.value;
+                    const day = daySelect.value;
+                    
+                    if (!year || !month || !day) {
+                        showModal('Please select a full date.');
+                        return;
+                    }
+
+                    const newSelectedDate = `${year}-${month}-${day}`;
+                    selectedDate = newSelectedDate;
+                    updateDashboardForDate(selectedDate);
+                    calendarModal.style.display = 'none';
+                });
+                
+                // Gemini API Functionality
+                generateSummaryButton.addEventListener('click', async () => {
+                    if (!userId) {
+                        showModal('Authentication in progress. Please wait and try again.');
+                        return;
+                    }
+
+                    loadingModal.style.display = 'flex';
+
+                    const purchaseQuery = query(purchaseRef, where("date", "==", selectedDate));
+                    const salesQuery = query(salesRef, where("date", "==", selectedDate));
+                    const purchaseSnapshot = await getDocs(purchaseQuery);
+                    const salesSnapshot = await getDocs(salesQuery);
+
+                    let purchaseData = [];
+                    purchaseSnapshot.forEach(doc => purchaseData.push(doc.data()));
+                    let salesData = [];
+                    salesSnapshot.forEach(doc => salesData.push(doc.data()));
+
+                    let promptText = `
+                        Generate a business summary for a plastic manufacturing company named 'Parveen Plastics Ltd.'. The summary should be for the date ${selectedDate}.
+
+                        Purchases:
+                        ${JSON.stringify(purchaseData, null, 2)}
+
+                        Sales:
+                        ${JSON.stringify(salesData, null, 2)}
+
+                        Act as a professional financial analyst. Provide a single-paragraph summary of the key financial activities for the day. Focus on total quantity of plastic purchased and sold in Kgs, total money spent (with tax) on purchases, total money earned (with tax) from sales, and the net tax (sales tax - input tax) for the day. Do not mention specific item details, timestamps, or individual transactions. Use a friendly and encouraging tone.
+                    `;
+                    
+                    const systemPrompt = "You are a concise financial advisor for a small business. Provide a summary based on the data given to you.";
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                    const payload = {
+                        contents: [{ parts: [{ text: promptText }] }],
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        }
+                    };
+
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`API call failed with status: ${response.status}`);
+                        }
+
+                        const result = await response.json();
+                        const summary = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                        if (summary) {
+                            showModal(summary);
+                        } else {
+                            showModal('Could not generate a summary. The provided data may be insufficient.');
+                        }
+                    } catch (error) {
+                        console.error("Error calling Gemini API:", error);
+                        showModal('Failed to generate summary. Please check your network connection.');
+                    } finally {
+                        loadingModal.style.display = 'none';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
